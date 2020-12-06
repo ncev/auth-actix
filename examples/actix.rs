@@ -114,8 +114,6 @@ async fn host(
     let token =
         user.and_then(
             |user|
-
-
                 write_token(Header::default().borrow(), &user, configuration.secret)
     );
 
