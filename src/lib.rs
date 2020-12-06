@@ -1,3 +1,5 @@
+extern crate auth_actix;
+
 use actix_web::{Error, ResponseError, HttpRequest};
 use futures::future::{ok, Ready, err};
 use actix_web::http::{StatusCode, HeaderValue};
