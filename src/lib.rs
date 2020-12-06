@@ -57,7 +57,7 @@ fn read_token<A>(
 
         // we read the str to A
         .and_then(
-            |header_value| decode(header_value, &DecodingKey::from_secret(secret), &validation).ok())
+            |header_value| decode(header_value, DecodingKey::from_secret(secret).borrow(), validation).ok())
 
 
         // we keep the claim
