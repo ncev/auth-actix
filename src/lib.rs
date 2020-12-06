@@ -149,7 +149,7 @@ mod tests {
 
 
     #[test]
-    fn write_and_read_token() {
+    fn read_token_test() {
 
         // token mock
         let token =

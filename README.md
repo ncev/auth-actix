@@ -1,6 +1,6 @@
 # Authentication with token JWT for Actix
 
-You can checkout a usage example by running:
+You can checkout an usage example by running:
 
     cargo run --example actix
 
