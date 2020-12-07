@@ -151,21 +151,20 @@ async fn main() -> std::io::Result<()> {
 
 
 
-
     HttpServer::new(move ||
         App::new()
 
 
 
             // inject the configuration
-            .data(configuration.clone())
+            .app_data(configuration.clone())
 
 
 
 
             // endpoints
-            .route("/", web::get().to(check_token))
-            .route("/test", web::post().to(host))
+            .route("/check", web::get().to(check_token))
+            .route("/host", web::post().to(host))
     )
         .bind("127.0.0.1:8080")?
         .run()
