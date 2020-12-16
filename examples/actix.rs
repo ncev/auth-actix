@@ -31,10 +31,6 @@ impl Display for User {
 
 
 
-
-
-
-
 /// FromRequest
 ///
 /// allow to get it throught our endpoint function arguments
@@ -43,12 +39,13 @@ impl FromRequest for User {
     type Future = Ready<Result<User, Error>>;
     type Config = ();
 
-
-
     fn from_request(
         req: &HttpRequest,
         _payload: &mut Payload<PayloadStream>
     ) -> Self::Future {
+
+
+
 
 
         let validation = Validation {
@@ -59,15 +56,10 @@ impl FromRequest for User {
 
 
         authenticate_from_request(req, &validation, b"secret")
+
+
     }
 }
-
-
-
-
-
-
-
 
 
 
@@ -89,9 +81,9 @@ async fn check_token(_req: HttpRequest, user: Option<User>) -> HttpResponse {
 
 
 
-    HttpResponse::Ok().body(is_valid)
+    HttpResponse::Ok()
+        .body(is_valid)
 }
-
 
 
 
@@ -103,11 +95,8 @@ async fn host(
 ) -> HttpResponse {
 
 
-
     // we get user informations throught the body
     let user: Option<User> = serde_json::from_str(user.as_str()).ok();
-
-
 
 
     // then we get a token
@@ -116,7 +105,6 @@ async fn host(
             |user|
                 write_token(Header::default().borrow(), &user, configuration.secret)
     );
-
 
 
 
@@ -150,16 +138,11 @@ async fn main() -> std::io::Result<()> {
 
 
 
-
     HttpServer::new(move ||
         App::new()
 
-
-
             // inject the configuration
             .app_data(configuration.clone())
-
-
 
 
             // endpoints
