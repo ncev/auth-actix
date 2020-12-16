@@ -3,7 +3,7 @@ use futures::future::{ok, Ready, err};
 use actix_web::http::{StatusCode, HeaderValue};
 use core::fmt;
 use serde::export::Formatter;
-use serde::{Serialize};
+use serde::Serialize;
 use serde::export::fmt::Display;
 use jsonwebtoken::{decode, DecodingKey, Validation, Header, encode, EncodingKey};
 use serde::de::DeserializeOwned;
