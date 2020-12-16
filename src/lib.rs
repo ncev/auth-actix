@@ -1,4 +1,6 @@
-use actix_web::{Error, ResponseError, HttpRequest};
+pub mod types;
+
+use actix_web::{Error, ResponseError, HttpRequest, FromRequest};
 use futures::future::{ok, Ready, err};
 use actix_web::http::{StatusCode, HeaderValue};
 use core::fmt;
@@ -8,19 +10,64 @@ use serde::export::fmt::Display;
 use jsonwebtoken::{decode, DecodingKey, Validation, Header, encode, EncodingKey};
 use serde::de::DeserializeOwned;
 use std::borrow::Borrow;
+use actix_web::dev::{Payload, PayloadStream};
+use actix_web::web::Data;
+use crate::types::{Auth, AuthenticationError, AuthConfiguration};
+
+
+/// FromRequest
+///
+/// allow to get it throught our endpoint function arguments
+impl<T: DeserializeOwned + Display> FromRequest for Auth<T> {
+    type Error = Error;
+    type Future = Ready<Result<Auth<T>, Error>>;
+    type Config = ();
+
+    fn from_request(
+        req: &HttpRequest,
+        _payload: &mut Payload<PayloadStream>
+    ) -> Self::Future {
+
+
+        // get the auth configuration
+        // (ex: secret)
+        let conf: Option<&Data<AuthConfiguration>> =
+            req.app_data::<Data<AuthConfiguration>>();
 
 
 
-/// Authentication failed struct representation
-#[derive(Debug)]
-struct AuthenticationError {}
+        match conf {
+            // if None => Configuration is missing
+            None =>
+                err(Error::from(AuthenticationError::MissingConfiguration)),
 
+
+            Some(conf) => {
+
+                let validation = Validation {
+                    validate_exp: false,
+                    ..Validation::default()
+                };
+
+                // log the user
+                authenticate_from_request(req, &validation, conf.secret)
+            }
+        }
+    }
+}
 
 
 /// display implementation, needed for FromRequest trait
 impl fmt::Display for AuthenticationError {
     fn fmt(&self, f: &mut Formatter<'_>)
-        -> fmt::Result { write!(f, "Authentication failed") }
+        -> fmt::Result {
+        match self {
+            AuthenticationError::Failed =>
+                write!(f, "Missing configuration, inject it through app_data"),
+            AuthenticationError::MissingConfiguration =>
+                write!(f, "Authentication failed")
+        }
+    }
 }
 
 
@@ -38,12 +85,12 @@ impl ResponseError for AuthenticationError {
 
 
 /// Read from a token
-fn read_token<A>(
+fn read_token<T>(
     token: &HeaderValue,
     validation: &Validation,
     secret: &[u8]
-) -> Option<A>
-    where A: DeserializeOwned + Display
+) -> Option<T>
+    where T: DeserializeOwned + Display
 {
 
     // we convert the HeaderValue to str
@@ -67,12 +114,12 @@ fn read_token<A>(
 
 
 /// authenticate user throught token
-pub fn authenticate_from_request<A>(
+pub fn authenticate_from_request<T>(
     req: &HttpRequest,
     validation: &Validation,
     secret: &[u8]
-) -> Ready<Result<A, Error>>
-    where A: DeserializeOwned + Display
+) -> Ready<Result<Auth<T>, Error>>
+    where T: DeserializeOwned + Display
 {
 
 
@@ -99,9 +146,9 @@ pub fn authenticate_from_request<A>(
     // if Nothing, then we wrap an AuthenticationError in err
     match auth {
         Some(x) =>
-            ok(x),
+            ok(Auth { wrapped: x }),
         None =>
-            err(Error::from(AuthenticationError {}))
+            err(Error::from(AuthenticationError::Failed))
     }
 }
 

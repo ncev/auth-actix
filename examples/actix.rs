@@ -1,14 +1,13 @@
-use actix_web::{Error, HttpServer, web, App, HttpRequest, FromRequest, HttpResponse};
-use futures::future::{Ready};
-use actix_web::dev::{PayloadStream, Payload};
+use actix_web::{HttpServer, web, App, HttpRequest, HttpResponse};
 use serde::{Serialize, Deserialize};
 use serde::export::fmt::Display;
 use serde::export::Formatter;
 use core::fmt;
-use jsonwebtoken::{Validation, Header};
+use jsonwebtoken::Header;
 use std::borrow::Borrow;
 use actix_web::web::Data;
-use auth_actix::{authenticate_from_request, write_token};
+use auth_actix::write_token;
+use auth_actix::types::{AuthConfiguration, Auth, run_auth};
 
 extern crate auth_actix;
 
@@ -21,68 +20,31 @@ struct User {
 
 /// Display implementation, needed by FromRequest
 impl Display for User {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.name)
-    }
+    fn fmt(&self, f: &mut Formatter<'_>)
+        -> fmt::Result { write!(f, "{}", self.name) }
 }
-
-
-
-
-
-
-/// FromRequest
-///
-/// allow to get it throught our endpoint function arguments
-impl FromRequest for User {
-    type Error = Error;
-    type Future = Ready<Result<User, Error>>;
-    type Config = ();
-
-    fn from_request(
-        req: &HttpRequest,
-        _payload: &mut Payload<PayloadStream>
-    ) -> Self::Future {
-
-
-
-
-
-        let validation = Validation {
-            validate_exp: false,
-            ..Validation::default()
-        };
-
-
-
-        authenticate_from_request(req, &validation, b"secret")
-
-
-    }
-}
-
-
-
 
 
 /// check token is valid
 ///
 /// user is None => token invalid
-async fn check_token(_req: HttpRequest, user: Option<User>) -> HttpResponse {
-
-
+///
+/// note, user is wrapped in an Auth, meaning check it will check the token by itself
+///
+/// but, feel free to implement the 'FromRequest' by yourself for your own type
+/// https://docs.rs/actix-web/3.3.2/actix_web/trait.FromRequest.html
+///
+async fn check_token(_req: HttpRequest, user: Option<Auth<User>>) -> HttpResponse {
 
     let is_valid = match user {
         Some(user) =>
-            format!("you are {}", user.name),
+            // run_auth simply unwrap the owned value
+            format!("you are {}", run_auth(user).name),
         None =>
             "token invalid".into()
     };
 
-
-
-    HttpResponse::Ok()
-        .body(is_valid)
+    HttpResponse::Ok().body(is_valid)
 }
 
 
@@ -90,13 +52,14 @@ async fn check_token(_req: HttpRequest, user: Option<User>) -> HttpResponse {
 /// host, get user token
 async fn host(
     _req: HttpRequest,
-    configuration: Data<Config>, // configuration for the token
+    configuration: Data<AuthConfiguration>, // configuration for the token
     user: String // user information (body)
 ) -> HttpResponse {
 
 
     // we get user informations throught the body
-    let user: Option<User> = serde_json::from_str(user.as_str()).ok();
+    let user: Option<User> =
+        serde_json::from_str(user.as_str()).ok();
 
 
     // then we get a token
@@ -121,19 +84,13 @@ async fn host(
 
 
 
-
-/// Configuration, token information
-struct Config {
-    secret: &'static [u8]
-}
-
-
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
 
 
+    // initialise the configuration
     let configuration = Data::new(
-            Config { secret: b"secret" }
+        AuthConfiguration { secret: b"secret" }
         );
 
 
@@ -143,7 +100,6 @@ async fn main() -> std::io::Result<()> {
 
             // inject the configuration
             .app_data(configuration.clone())
-
 
             // endpoints
             .route("/check", web::get().to(check_token))
