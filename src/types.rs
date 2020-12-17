@@ -2,6 +2,11 @@ use std::fmt::{Display, Formatter};
 use std::fmt;
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
+use actix_web::Error;
+
+
+/// AuthResult => type alias
+pub type AuthResult<T> = Result<Auth<T>, Error>;
 
 
 

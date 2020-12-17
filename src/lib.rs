@@ -12,7 +12,7 @@ use serde::de::DeserializeOwned;
 use std::borrow::Borrow;
 use actix_web::dev::{Payload, PayloadStream};
 use actix_web::web::Data;
-use crate::types::{Auth, AuthenticationError, AuthConfiguration};
+use crate::types::{Auth, AuthenticationError, AuthConfiguration, AuthResult};
 
 
 /// FromRequest
@@ -20,7 +20,7 @@ use crate::types::{Auth, AuthenticationError, AuthConfiguration};
 /// allow to get it throught our endpoint function arguments
 impl<T: DeserializeOwned + Display> FromRequest for Auth<T> {
     type Error = Error;
-    type Future = Ready<Result<Auth<T>, Error>>;
+    type Future = Ready<AuthResult<T>>;
     type Config = ();
 
     fn from_request(
@@ -118,7 +118,7 @@ pub fn authenticate_from_request<T>(
     req: &HttpRequest,
     validation: &Validation,
     secret: &[u8]
-) -> Ready<Result<Auth<T>, Error>>
+) -> Ready<AuthResult<T>>
     where T: DeserializeOwned + Display
 {
 

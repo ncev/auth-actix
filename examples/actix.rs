@@ -34,7 +34,10 @@ impl Display for User {
 /// but, feel free to implement the 'FromRequest' by yourself for your own type
 /// https://docs.rs/actix-web/3.3.2/actix_web/trait.FromRequest.html
 ///
-async fn check_token(_req: HttpRequest, user: Option<Auth<User>>) -> HttpResponse {
+async fn check_token(
+    _req: HttpRequest,
+    user: Option<Auth<User>>
+) -> HttpResponse {
 
     let is_valid = match user {
         Some(user) =>
@@ -86,7 +89,6 @@ async fn host(
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-
 
     // initialise the configuration
     let configuration =
