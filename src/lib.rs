@@ -31,7 +31,7 @@ impl<T: DeserializeOwned + Display> FromRequest for Auth<T> {
 
         // get the auth configuration
         // (ex: secret)
-        let conf: Option<&Data<AuthConfiguration>> =
+        let conf =
             req.app_data::<Data<AuthConfiguration>>();
 
 
