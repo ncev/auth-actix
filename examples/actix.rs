@@ -89,9 +89,8 @@ async fn main() -> std::io::Result<()> {
 
 
     // initialise the configuration
-    let configuration = Data::new(
-        AuthConfiguration { secret: b"secret" }
-        );
+    let configuration =
+        Data::new(AuthConfiguration { secret: b"secret" });
 
 
 
