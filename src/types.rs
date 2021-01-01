@@ -71,6 +71,5 @@ impl fmt::Display for AuthenticationError {
 
 /// ResponseError implementation, UNAUTHORIZED being 401
 impl ResponseError for AuthenticationError {
-    fn status_code(&self)
-                   -> StatusCode { StatusCode::UNAUTHORIZED }
+    fn status_code(&self) -> StatusCode { StatusCode::UNAUTHORIZED }
 }
