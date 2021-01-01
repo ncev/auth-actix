@@ -1,4 +1,4 @@
-use actix_web::{HttpServer, web, App, HttpRequest, HttpResponse};
+use actix_web::{HttpServer, web, App, HttpResponse};
 use serde::{Serialize, Deserialize};
 use serde::export::fmt::Display;
 use serde::export::Formatter;
@@ -35,7 +35,6 @@ impl Display for User {
 /// https://docs.rs/actix-web/3.3.2/actix_web/trait.FromRequest.html
 ///
 async fn check_token(
-    _req: HttpRequest,
     user: Option<Auth<User>>
 ) -> HttpResponse {
 
@@ -54,7 +53,6 @@ async fn check_token(
 
 /// host, get user token
 async fn host(
-    _req: HttpRequest,
     configuration: Data<AuthConfiguration>, // configuration for the token
     user: String // user information (body)
 ) -> HttpResponse {
