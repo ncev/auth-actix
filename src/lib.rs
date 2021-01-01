@@ -64,16 +64,19 @@ fn read_token<T>(
     token.to_str().ok()
         // we remove the 'Bearer ' prefix
         .and_then(
-            |header_value| header_value.split("Bearer ").last())
+            |header_value|
+                header_value.split("Bearer ").last())
         // we read the str to A
         .and_then(
             |header_value|
-                decode(header_value, DecodingKey::from_secret(secret).borrow(), validation)
-                    .ok()
-        )
+                decode(
+                    header_value,
+                    DecodingKey::from_secret(secret).borrow(),
+                    validation).ok())
         // we keep the claim
         .map(
-            |token_data| token_data.claims)
+            |token_data|
+                token_data.claims)
 }
 
 
@@ -94,12 +97,12 @@ pub fn authenticate_from_request<T>(
     // then we parse it to an A
     let auth = header_token
         .and_then(
-        |header_token|
-            read_token(
-                header_token,
-                validation,
-                secret)
-    );
+            |header_token|
+                read_token(
+                    header_token,
+                    validation,
+                    secret)
+        );
 
 
     // in the end we wrap it in an ok
