@@ -1,10 +1,8 @@
 pub mod types;
 
-use actix_web::{Error, ResponseError, HttpRequest, FromRequest};
+use actix_web::{Error, HttpRequest, FromRequest};
 use futures::future::{ok, Ready, err};
-use actix_web::http::{StatusCode, HeaderValue};
-use core::fmt;
-use serde::export::Formatter;
+use actix_web::http::HeaderValue;
 use serde::Serialize;
 use serde::export::fmt::Display;
 use jsonwebtoken::{decode, DecodingKey, Validation, Header, encode, EncodingKey};
@@ -28,19 +26,16 @@ impl<T: DeserializeOwned + Display> FromRequest for Auth<T> {
         _payload: &mut Payload<PayloadStream>
     ) -> Self::Future {
 
-
         // get the auth configuration
         // (ex: secret)
         let conf =
             req.app_data::<Data<AuthConfiguration>>();
 
 
-
         match conf {
             // if None => Configuration is missing
             None =>
                 err(Error::from(AuthenticationError::MissingConfiguration)),
-
 
             Some(conf) => {
 
@@ -57,33 +52,6 @@ impl<T: DeserializeOwned + Display> FromRequest for Auth<T> {
 }
 
 
-/// display implementation, needed for FromRequest trait
-impl fmt::Display for AuthenticationError {
-    fn fmt(&self, f: &mut Formatter<'_>)
-        -> fmt::Result {
-        match self {
-            AuthenticationError::Failed =>
-                write!(f, "Missing configuration, inject it through app_data"),
-            AuthenticationError::MissingConfiguration =>
-                write!(f, "Authentication failed")
-        }
-    }
-}
-
-
-/// ResponseError implementation, UNAUTHORIZED being 401
-impl ResponseError for AuthenticationError {
-    fn status_code(&self)
-        -> StatusCode { StatusCode::UNAUTHORIZED }
-}
-
-
-
-
-
-
-
-
 /// Read from a token
 fn read_token<T>(
     token: &HeaderValue,
@@ -92,21 +60,17 @@ fn read_token<T>(
 ) -> Option<T>
     where T: DeserializeOwned + Display
 {
-
     // we convert the HeaderValue to str
     token.to_str().ok()
-
-
         // we remove the 'Bearer ' prefix
         .and_then(
             |header_value| header_value.split("Bearer ").last())
-
-
         // we read the str to A
         .and_then(
-            |header_value| decode(header_value, DecodingKey::from_secret(secret).borrow(), validation).ok())
-
-
+            |header_value|
+                decode(header_value, DecodingKey::from_secret(secret).borrow(), validation)
+                    .ok()
+        )
         // we keep the claim
         .map(
             |token_data| token_data.claims)
@@ -122,11 +86,9 @@ pub fn authenticate_from_request<T>(
     where T: DeserializeOwned + Display
 {
 
-
     // we get the header which hold the token
     let header_token =
         req.headers().get("Authorization");
-
 
 
     // then we parse it to an A
@@ -138,8 +100,6 @@ pub fn authenticate_from_request<T>(
                 validation,
                 secret)
     );
-
-
 
 
     // in the end we wrap it in an ok
@@ -168,11 +128,6 @@ pub fn write_token<A>(
 
 
 
-
-
-
-
-
 #[cfg(test)]
 mod tests {
     use actix_web::http::HeaderValue;
@@ -182,11 +137,13 @@ mod tests {
     use std::fmt;
     use crate::read_token;
 
+
     #[derive(Serialize, Deserialize, PartialEq, Debug)]
     struct ClaimUser {
         name: String,
         age: i32
     }
+
 
     impl Display for ClaimUser {
         fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
@@ -205,7 +162,6 @@ mod tests {
             .MVBuir8NRKn_eGJJHM1bj-bAN1ynJP_7o3g5nbaYNLE";
 
 
-
         let header =
             HeaderValue::from_static(token);
 
@@ -214,7 +170,6 @@ mod tests {
 
         let validation =
             Validation { validate_exp: false, ..Validation::default() };
-
 
 
         assert_eq!(
